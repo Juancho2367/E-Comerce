@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# Builds de Next.js
+.next/
+out/
+
+# Logs
+yarn-debug.log*
+yarn-error.log*
+npm-debug.log*
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Tipos generados
+.next/types/
+
+# Otros
+.env
+.env.local
+.env.*.local
