@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,9 +12,12 @@ import { toast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { productService } from "@/services/product.service"
 import type { Product } from "@/lib/mock-data"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function ProductDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { isAuthenticated } = useAuth()
   const productId = params.id as string
   
   const [product, setProduct] = useState<Product | undefined>(undefined)
@@ -54,6 +57,24 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product) return
 
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas iniciar sesión para agregar productos al carrito",
+        variant: "destructive",
+        action: (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))}
+          >
+            Iniciar Sesión
+          </Button>
+        ),
+      })
+      return
+    }
+
     if (!selectedSize) {
       toast({
         title: "Selecciona una talla",
@@ -70,6 +91,22 @@ export default function ProductDetailPage() {
       })
       return
     }
+
+    // Guardar en localStorage (simulado)
+    const cartItem = {
+      id: Date.now().toString(),
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0] || "/placeholder.svg",
+      size: selectedSize,
+      color: selectedColor,
+      quantity: quantity,
+    }
+
+    const existingCart = JSON.parse(localStorage.getItem('cartItems') || '[]')
+    existingCart.push(cartItem)
+    localStorage.setItem('cartItems', JSON.stringify(existingCart))
 
     toast({
       title: "Producto agregado al carrito",

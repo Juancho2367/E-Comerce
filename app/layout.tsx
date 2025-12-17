@@ -3,8 +3,12 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
+import { TopBanner } from "@/components/top-banner"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { Chatbot } from "@/components/chatbot"
+import { WhatsAppButton } from "@/components/whatsapp-button"
+import { AuthProvider } from "@/contexts/auth-context"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -40,9 +44,14 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`font-sans antialiased min-h-screen flex flex-col`}>
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <TopBanner />
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <Chatbot />
+          <WhatsAppButton />
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

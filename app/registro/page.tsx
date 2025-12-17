@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function RegistroPage() {
+  const router = useRouter()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -24,8 +28,12 @@ export default function RegistroPage() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Register:", formData)
-    // Demo: redirect to home
-    window.location.href = "/"
+    
+    // Iniciar sesión usando el contexto
+    login()
+    
+    // Redirigir al home
+    router.push("/")
   }
 
   return (

@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react"
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, LogIn } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 interface CartItem {
   id: string
@@ -20,43 +22,81 @@ interface CartItem {
 }
 
 export default function CarritoPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      productId: "1",
-      name: "Jean Clásico Azul",
-      price: 1299,
-      image: "/placeholder.svg?height=200&width=150",
-      size: "M",
-      color: "Azul",
-      quantity: 1,
-    },
-    {
-      id: "2",
-      productId: "2",
-      name: "Jean Denim Premium",
-      price: 1499,
-      image: "/placeholder.svg?height=200&width=150",
-      size: "L",
-      color: "Negro",
-      quantity: 2,
-    },
-  ])
+  const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Cargar carrito cuando el usuario esté autenticado
+  useEffect(() => {
+    if (!authLoading) {
+      if (isAuthenticated) {
+        // Cargar carrito desde localStorage
+        const savedCart = localStorage.getItem('cartItems')
+        if (savedCart) {
+          try {
+            const cart = JSON.parse(savedCart)
+            setCartItems(cart)
+          } catch (error) {
+            console.error('Error loading cart:', error)
+          }
+        }
+      }
+      setIsLoading(false)
+    }
+  }, [isAuthenticated, authLoading])
 
   const [couponCode, setCouponCode] = useState("")
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return
-    setCartItems(cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+    const updated = cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item))
+    setCartItems(updated)
+    localStorage.setItem('cartItems', JSON.stringify(updated))
   }
 
   const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
+    const updated = cartItems.filter((item) => item.id !== id)
+    setCartItems(updated)
+    localStorage.setItem('cartItems', JSON.stringify(updated))
   }
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shipping = subtotal > 100000 ? 0 : 15000
   const total = subtotal + shipping
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <ShoppingBag className="h-24 w-24 mx-auto mb-6 text-muted-foreground animate-pulse" />
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <LogIn className="h-24 w-24 mx-auto mb-6 text-muted-foreground" />
+          <h1 className="text-3xl font-light tracking-wide mb-4">Inicia sesión para continuar</h1>
+          <p className="text-muted-foreground mb-8">
+            Necesitas iniciar sesión para agregar productos a tu carrito y realizar compras.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button size="lg" asChild>
+              <Link href="/login">Iniciar Sesión</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/productos">Explorar Productos</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (cartItems.length === 0) {
     return (
