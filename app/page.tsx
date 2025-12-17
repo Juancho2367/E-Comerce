@@ -12,7 +12,7 @@ export default async function HomePage() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative h-[600px] md:h-[700px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80">
-        <div className="absolute inset-0 bg-[url('/images/screenshot-202025-12-16-20012113.png')] bg-cover bg-center opacity-40" />
+        <div className="absolute inset-0 bg-[url('/images/home/hero-background.jpg')] bg-cover bg-center opacity-40" />
         <div className="relative z-10 container mx-auto px-4 text-center text-white">
           <Badge className="mb-4 bg-accent-bg text-foreground border-0">COLECCIÓN INVIERNO 2025</Badge>
           <h1 className="text-5xl md:text-7xl font-light tracking-wide mb-6 text-balance">
