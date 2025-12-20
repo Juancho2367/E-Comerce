@@ -7,7 +7,6 @@ import { TopBanner } from "@/components/top-banner"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Chatbot } from "@/components/chatbot"
-import { WhatsAppButton } from "@/components/whatsapp-button"
 import { AuthProvider } from "@/contexts/auth-context"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -50,7 +49,6 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
           <Chatbot />
-          <WhatsAppButton />
         </AuthProvider>
         <Analytics />
       </body>

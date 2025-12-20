@@ -229,17 +229,17 @@ export function Chatbot() {
       {/* Botón flotante */}
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-2xl hover:shadow-3xl transition-all bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 group animate-in fade-in slide-in-from-bottom-4"
+        className="fixed bottom-6 right-6 z-50 h-auto px-4 py-3 rounded-full shadow-2xl hover:shadow-3xl transition-all bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 group animate-in fade-in slide-in-from-bottom-4 flex items-center gap-2"
         size="lg"
       >
         <div className="relative">
-          <MessageCircle className="h-7 w-7 group-hover:scale-110 transition-transform" />
+          <MessageCircle className="h-5 w-5 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
           </span>
         </div>
-        <span className="sr-only">Abrir chatbot</span>
+        <span className="font-medium text-sm">ELITE IA</span>
       </Button>
 
       {/* Panel de chat */}

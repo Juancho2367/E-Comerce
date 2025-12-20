@@ -39,14 +39,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = () => {
+    // Antes de iniciar sesión, guardar el carrito actual (si existe)
+    // Esto permite migrar el carrito del usuario no autenticado al autenticado
+    const currentCart = localStorage.getItem('cartItems')
+    
     localStorage.setItem('isAuthenticated', 'true')
     setIsAuthenticated(true)
+    
+    // Si había un carrito antes de iniciar sesión, se mantiene
+    // En una implementación real con Supabase, aquí se migraría el carrito
+    // desde session_id o localStorage al user_id en la base de datos
+    
+    // Disparar evento para actualizar componentes que dependen del estado de autenticación
+    window.dispatchEvent(new Event('authStateChanged'))
   }
 
   const logout = () => {
+    // Opcional: mantener el carrito al cerrar sesión (para mejor UX)
+    // O eliminar el carrito si se prefiere
+    // localStorage.removeItem('cartItems') // Descomentar si quieres limpiar el carrito al cerrar sesión
+    
     localStorage.removeItem('isAuthenticated')
-    localStorage.removeItem('cartItems')
     setIsAuthenticated(false)
+    
+    // Disparar evento para actualizar componentes
+    window.dispatchEvent(new Event('authStateChanged'))
+    window.dispatchEvent(new Event('cartUpdated'))
+    
     router.push('/')
   }
 

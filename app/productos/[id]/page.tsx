@@ -57,24 +57,6 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product) return
 
-    if (!isAuthenticated) {
-      toast({
-        title: "Inicia sesión para continuar",
-        description: "Necesitas iniciar sesión para agregar productos al carrito",
-        variant: "destructive",
-        action: (
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))}
-          >
-            Iniciar Sesión
-          </Button>
-        ),
-      })
-      return
-    }
-
     if (!selectedSize) {
       toast({
         title: "Selecciona una talla",
@@ -92,7 +74,7 @@ export default function ProductDetailPage() {
       return
     }
 
-    // Guardar en localStorage (simulado)
+    // Guardar en localStorage (funciona para usuarios autenticados y no autenticados)
     const cartItem = {
       id: Date.now().toString(),
       productId: product.id,
@@ -107,6 +89,9 @@ export default function ProductDetailPage() {
     const existingCart = JSON.parse(localStorage.getItem('cartItems') || '[]')
     existingCart.push(cartItem)
     localStorage.setItem('cartItems', JSON.stringify(existingCart))
+
+    // Disparar evento personalizado para actualizar el contador del header
+    window.dispatchEvent(new Event('cartUpdated'))
 
     toast({
       title: "Producto agregado al carrito",
