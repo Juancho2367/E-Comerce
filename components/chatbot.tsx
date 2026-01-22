@@ -5,14 +5,13 @@ import { MessageCircle, X, Send, Bot, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { products } from '@/lib/mock-data'
-import Link from 'next/link'
+import { toast } from 'sonner'
+import Image from 'next/image'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
-  productId?: string
 }
 
 export function Chatbot() {
@@ -52,150 +51,6 @@ export function Chatbot() {
     }
   }
 
-  const handleProductSearch = (query: string): Message[] => {
-    const lowerQuery = query.toLowerCase()
-    const matchingProducts = products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(lowerQuery) ||
-        product.description.toLowerCase().includes(lowerQuery) ||
-        product.category.toLowerCase().includes(lowerQuery) ||
-        product.subcategory.toLowerCase().includes(lowerQuery) ||
-        product.colors.some((color) => color.toLowerCase().includes(lowerQuery))
-    )
-
-    if (matchingProducts.length === 0) {
-      return [
-        {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: `No encontré productos que coincidan con "${query}". ¿Podrías ser más específico? Por ejemplo, puedes preguntar por "jeans", "leggings", o "tops deportivos".`,
-        },
-      ]
-    }
-
-    const productList = matchingProducts
-      .slice(0, 3)
-      .map(
-        (product) =>
-          `• **${product.name}** - $${product.price.toLocaleString()}${product.badge ? ` (${product.badge})` : ''}\n  ${product.description}`
-      )
-      .join('\n\n')
-
-    return matchingProducts.slice(0, 3).map((product) => ({
-      id: `${Date.now()}-${product.id}`,
-      role: 'assistant' as const,
-      content: `Encontré estos productos:\n\n${productList}\n\n¿Te gustaría ver más detalles de alguno?`,
-      productId: product.id,
-    }))
-  }
-
-  const handleOutfitRecommendation = (): Message => {
-    const outfits = [
-      {
-        name: 'Look Casual Elegante',
-        items: ['Jean Clásico Azul', 'Top Deportivo Negro'],
-        description: 'Perfecto para el día a día con un toque sofisticado.',
-      },
-      {
-        name: 'Look Deportivo',
-        items: ['Conjunto Deportivo Mint', 'Legging Deportivo Mint'],
-        description: 'Ideal para entrenar o hacer ejercicio con estilo.',
-      },
-      {
-        name: 'Look Versátil',
-        items: ['Jean Recto Claro', 'Top Deportivo Negro'],
-        description: 'Un look que puedes usar en cualquier ocasión.',
-      },
-    ]
-
-    const randomOutfit = outfits[Math.floor(Math.random() * outfits.length)]
-    const outfitText = `**${randomOutfit.name}**\n\n${randomOutfit.items.join(' + ')}\n\n${randomOutfit.description}\n\n¿Te gustaría ver alguno de estos productos?`
-
-    return {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: outfitText,
-    }
-  }
-
-  const handleGeneralRecommendation = (): Message => {
-    const recommendations = [
-      'Te recomiendo explorar nuestra colección de jeans. Tenemos opciones desde $1,199 hasta $1,499, con diferentes cortes y estilos.',
-      'Si buscas algo para el gym, tenemos conjuntos deportivos y leggings de alta calidad con tecnología anti-sudor.',
-      'Para un look completo, combina nuestros jeans con alguno de nuestros tops deportivos. ¡Quedarás increíble!',
-      'Nuestra colección incluye productos nuevos y ediciones limitadas. ¡No te los pierdas!',
-    ]
-
-    const randomRec = recommendations[Math.floor(Math.random() * recommendations.length)]
-
-    return {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: randomRec,
-    }
-  }
-
-  const processMessage = (userMessage: string): Message[] => {
-    const lowerMessage = userMessage.toLowerCase()
-
-    // Búsqueda de productos
-    if (
-      lowerMessage.includes('producto') ||
-      lowerMessage.includes('jean') ||
-      lowerMessage.includes('legging') ||
-      lowerMessage.includes('top') ||
-      lowerMessage.includes('conjunto') ||
-      lowerMessage.includes('buscar') ||
-      lowerMessage.includes('tienes') ||
-      lowerMessage.includes('hay')
-    ) {
-      return handleProductSearch(userMessage)
-    }
-
-    // Recomendaciones de outfits
-    if (
-      lowerMessage.includes('outfit') ||
-      lowerMessage.includes('combinar') ||
-      lowerMessage.includes('look') ||
-      lowerMessage.includes('vestir') ||
-      lowerMessage.includes('poner')
-    ) {
-      return [handleOutfitRecommendation()]
-    }
-
-    // Recomendaciones generales
-    if (
-      lowerMessage.includes('recomend') ||
-      lowerMessage.includes('suger') ||
-      lowerMessage.includes('qué') ||
-      lowerMessage.includes('ayuda') ||
-      lowerMessage.includes('ayudar')
-    ) {
-      return [handleGeneralRecommendation()]
-    }
-
-    // Saludo
-    if (lowerMessage.includes('hola') || lowerMessage.includes('hi') || lowerMessage.includes('buenos')) {
-      return [
-        {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: '¡Hola! 😊 ¿En qué puedo ayudarte? Puedo ayudarte a encontrar productos, sugerir outfits o darte recomendaciones.',
-        },
-      ]
-    }
-
-    // Respuesta por defecto
-    return [
-      {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content:
-          'Entiendo. ¿Podrías ser más específico? Puedo ayudarte con:\n\n• Búsqueda de productos\n• Recomendaciones de outfits\n• Sugerencias de estilo\n\n¿Qué te gustaría hacer?',
-      },
-    ]
-  }
-
   const handleSend = async () => {
     if (!input.trim()) return
 
@@ -205,16 +60,53 @@ export function Chatbot() {
       content: input,
     }
 
+    const currentInput = input
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setIsTyping(true)
 
-    // Simular delay de respuesta
-    setTimeout(() => {
-      const responses = processMessage(input)
-      setMessages((prev) => [...prev, ...responses])
+    try {
+      // Llamar a la API de Gemini
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentInput,
+          history: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al obtener respuesta')
+      }
+
+      const data = await response.json()
+
+      const assistantMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: data.message,
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error)
+      toast.error('Hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.')
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Lo siento, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo? 😊',
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsTyping(false)
-    }, 800)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -249,8 +141,14 @@ export function Chatbot() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-                    <Bot className="h-6 w-6 text-primary-foreground" />
+                  <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg border-2 border-primary/20">
+                    <Image 
+                      src="/eliteicon.png" 
+                      alt="ELITE IA" 
+                      width={48} 
+                      height={48}
+                      className="object-cover scale-[1.6] object-[center_28%]"
+                    />
                   </div>
                   <span className="absolute -bottom-1 -right-1 flex h-4 w-4">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -280,8 +178,14 @@ export function Chatbot() {
                   className={`flex gap-3 items-end ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
                 >
                   {message.role === 'assistant' && (
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shadow-sm border border-primary/20">
-                      <Bot className="h-5 w-5 text-primary" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-sm border border-primary/20">
+                      <Image 
+                        src="/eliteicon.png" 
+                        alt="ELITE IA" 
+                        width={40} 
+                        height={40}
+                        className="object-cover scale-[1.6] object-[center_28%]"
+                      />
                     </div>
                   )}
                   <div
@@ -296,34 +200,28 @@ export function Chatbot() {
                     ) : (
                       <div className="text-sm whitespace-pre-wrap leading-relaxed">
                         {message.content.split('\n').map((line, idx) => {
-                          if (line.startsWith('**') && line.endsWith('**')) {
+                          // Detectar texto en negrita con **
+                          if (line.includes('**')) {
+                            const parts = line.split('**')
                             return (
-                              <strong key={idx} className="font-semibold text-foreground block mb-1">
-                                {line.slice(2, -2)}
-                              </strong>
+                              <p key={idx} className="my-1">
+                                {parts.map((part, i) => 
+                                  i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
+                                )}
+                              </p>
                             )
                           }
-                          if (line.startsWith('•')) {
+                          // Detectar listas con •, -, o números
+                          if (line.match(/^[\s]*[•\-\*]/) || line.match(/^[\s]*\d+\./)) {
                             return (
                               <div key={idx} className="ml-3 my-1 flex items-start gap-2">
-                                <span className="text-primary mt-1.5">•</span>
-                                <span>{line.substring(1).trim()}</span>
+                                <span className="text-primary mt-0.5">•</span>
+                                <span>{line.replace(/^[\s]*[•\-\*]\s*/, '').replace(/^[\s]*\d+\.\s*/, '')}</span>
                               </div>
                             )
                           }
                           return <p key={idx} className="my-1">{line || '\u00A0'}</p>
                         })}
-                        {message.productId && (
-                          <Link
-                            href={`/productos/${message.productId}`}
-                            className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-medium text-xs transition-colors border border-primary/20"
-                          >
-                            Ver producto
-                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        )}
                       </div>
                     )}
                   </div>
@@ -336,8 +234,14 @@ export function Chatbot() {
               ))}
               {isTyping && (
                 <div className="flex gap-3 justify-start items-end animate-in fade-in slide-in-from-bottom-2">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shadow-sm border border-primary/20">
-                    <Bot className="h-5 w-5 text-primary" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-sm border border-primary/20">
+                    <Image 
+                      src="/eliteicon.png" 
+                      alt="ELITE IA" 
+                      width={40} 
+                      height={40}
+                      className="object-cover scale-[1.6] object-[center_28%]"
+                    />
                   </div>
                   <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
                     <div className="flex gap-1.5 items-center">
@@ -374,22 +278,22 @@ export function Chatbot() {
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs text-muted-foreground">Sugerencias:</span>
               <button
-                onClick={() => setInput("¿Qué jeans tienes?")}
+                onClick={() => setInput("¿Qué outfit me recomiendas para una cita?")}
                 className="text-xs px-3 py-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors border border-border"
               >
-                ¿Qué jeans tienes?
+                Outfit para cita
               </button>
               <button
-                onClick={() => setInput("Sugerencia de outfit")}
+                onClick={() => setInput("¿Cómo combino un jean azul?")}
                 className="text-xs px-3 py-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors border border-border"
               >
-                Sugerencia de outfit
+                Combinar jean
               </button>
               <button
-                onClick={() => setInput("Recomendaciones")}
+                onClick={() => setInput("Colores que me favorecen")}
                 className="text-xs px-3 py-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors border border-border"
               >
-                Recomendaciones
+                Colores ideales
               </button>
             </div>
           </div>
