@@ -29,7 +29,8 @@ export function Chatbot() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hola, soy tu asesor de estilo de ÉLITE. ¿Cómo te llamas y para qué ocasión buscas tu outfit?',
+      content:
+        '¡Hola! Soy **ELITE IA**, tu asistente de ÉLITE. Puedo ayudarte con **recomendaciones de prendas/outfits**, **tallas**, **envíos**, **cambios/devoluciones** y dudas rápidas.\n\nPara hacerlo más fácil, puedes escribirme algo como:\n- "**Recomiéndame un outfit para una cita**"\n- "**Tengo una duda de tallas**"\n- "**¿Cómo funcionan los envíos y devoluciones?**"\n\n¿Cómo te gustaría que te llame y qué necesitas hoy?',
     },
   ])
   const [input, setInput] = useState('')
