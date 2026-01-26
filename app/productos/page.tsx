@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,7 +14,7 @@ import { SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react"
 import { productService } from "@/services/product.service"
 import type { Product, Category } from "@/lib/mock-data"
 
-export default function ProductosPage() {
+function ProductListContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -322,3 +322,16 @@ export default function ProductosPage() {
     </div>
   )
 }
+
+export default function ProductosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ProductListContent />
+    </Suspense>
+  )
+}
+
