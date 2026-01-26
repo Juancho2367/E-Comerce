@@ -19,7 +19,7 @@ export default function ProductDetailPage() {
   const router = useRouter()
   const { isAuthenticated } = useAuth()
   const productId = params.id as string
-  
+
   const [product, setProduct] = useState<Product | undefined>(undefined)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -212,9 +212,8 @@ export default function ProductDetailPage() {
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
-                      selectedColor === color ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
-                    }`}
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${selectedColor === color ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
+                      }`}
                     style={{
                       backgroundColor:
                         color === "Azul"

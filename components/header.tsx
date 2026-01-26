@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Search, User, Heart, ShoppingCart, Menu, LogOut, ArrowRight, Trash2 } from "lucide-react"
+import { Search, User, Heart, ShoppingCart, Menu, LogOut, ArrowRight, Trash2, ChevronDown, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useState, useEffect } from "react"
 import { categories } from "@/lib/mock-data"
 import { useAuth } from "@/contexts/auth-context"
@@ -66,7 +68,7 @@ export function Header() {
 
     window.addEventListener('cartUpdated', handleCartUpdate)
     window.addEventListener('storage', handleStorageChange)
-    
+
     // También verificar periódicamente (por si el cambio es en la misma pestaña)
     const interval = setInterval(updateCart, 1000)
 
@@ -149,31 +151,6 @@ export function Header() {
           <div className="flex items-center gap-2">
             {!isAuthPage && (
               <>
-                {isAuthenticated ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="hidden md:flex">
-                        <User className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">Mi Cuenta</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={logout} className="text-destructive">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Cerrar Sesión
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Button variant="ghost" size="icon" asChild className="hidden md:flex">
-                    <Link href="/login">
-                      <User className="h-5 w-5" />
-                    </Link>
-                  </Button>
-                )}
                 <Button variant="ghost" size="icon" className="hidden md:flex">
                   <Heart className="h-5 w-5" />
                 </Button>
@@ -196,7 +173,7 @@ export function Header() {
                           {cartCount} {cartCount === 1 ? 'artículo' : 'artículos'}
                         </span>
                       </div>
-                      
+
                       {cartItems.length === 0 ? (
                         <div className="text-center py-8">
                           <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
@@ -236,9 +213,9 @@ export function Header() {
                               </p>
                             )}
                           </div>
-                          
+
                           <Separator className="my-4" />
-                          
+
                           <div className="flex items-center justify-between mb-4">
                             <span className="font-semibold">Total:</span>
                             <span className="font-bold text-lg">${cartTotal.toLocaleString()}</span>
@@ -246,13 +223,13 @@ export function Header() {
                         </>
                       )}
                     </div>
-                    
+
                     {cartItems.length > 0 && (
                       <>
                         <Separator />
                         <div className="p-2">
-                          <Button 
-                            className="w-full" 
+                          <Button
+                            className="w-full"
                             size="sm"
                             onClick={() => router.push('/carrito')}
                           >
@@ -264,9 +241,73 @@ export function Header() {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[350px]">
+                    <SheetHeader>
+                      <SheetTitle className="text-left text-2xl font-light tracking-widest">ÉLITE</SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col gap-2 mt-6">
+                      <Link
+                        href="/"
+                        className="px-3 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                      >
+                        Inicio
+                      </Link>
+
+                      {categories.map((category) => (
+                        <Collapsible key={category.id}>
+                          <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors">
+                            {category.name}
+                            <ChevronDown className="h-4 w-4" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="pl-4">
+                            <Link
+                              href={`/productos?category=${category.id}`}
+                              className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
+                            >
+                              Ver Todo {category.name}
+                            </Link>
+                            {category.subcategories.map((sub) => (
+                              <Link
+                                key={sub}
+                                href={`/productos?category=${category.id}&sub=${sub}`}
+                                className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
+                              >
+                                {sub}
+                              </Link>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
+
+                      <Link
+                        href="/mayoristas"
+                        className="px-3 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                      >
+                        Mayoristas
+                      </Link>
+                      <Link
+                        href="/contacto"
+                        className="px-3 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                      >
+                        Contacto
+                      </Link>
+
+                      <Link
+                        href="#"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                      >
+                        <Heart className="h-4 w-4" />
+                        Favoritos
+                      </Link>
+                    </nav>
+                  </SheetContent>
+                </Sheet>
               </>
             )}
           </div>

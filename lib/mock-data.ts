@@ -22,7 +22,7 @@ export const categories: Category[] = [
   {
     id: "mujer",
     name: "Mujer",
-    subcategories: ["Jeans", "Tops", "Tops Deportivos", "Leggings", "Shorts", "Conjuntos", "Chaquetas", "Calzado", "Accesorios Gym"],
+    subcategories: ["Jeans", "Tops", "Chaquetas", "Calzado"],
   },
   {
     id: "gym",
@@ -94,8 +94,8 @@ export const products: Product[] = [
   {
     id: "6",
     name: "Top Crop Negro",
-    category: "gym",
-    subcategory: "Tops Deportivos",
+    category: "mujer",
+    subcategory: "Tops",
     price: 699,
     images: ["https://static.bershka.net/assets/public/467c/df36/44f5446ab599/66d2a852a742/00019180428-a2d/00019180428-a2d.jpg?ts=1762167192587&w=850"],
     badge: "Nuevo",

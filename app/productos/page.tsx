@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,13 +15,32 @@ import { productService } from "@/services/product.service"
 import type { Product, Category } from "@/lib/mock-data"
 
 export default function ProductosPage() {
+  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
+
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("featured")
+
+  // Leer parámetros de URL cuando cambian
+  useEffect(() => {
+    const categoryParam = searchParams.get("category")
+    const subParam = searchParams.get("sub")
+
+    if (categoryParam) {
+      setSelectedCategory(categoryParam)
+      if (subParam) {
+        setSelectedSubcategory(subParam)
+      } else {
+        setSelectedSubcategory("all")
+      }
+    } else {
+      setSelectedCategory("all")
+      setSelectedSubcategory("all")
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const fetchData = async () => {

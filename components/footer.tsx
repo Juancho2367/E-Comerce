@@ -6,13 +6,8 @@ export function Footer() {
     <footer className="bg-primary text-white mt-auto">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div>
-            <h3 className="text-2xl font-light tracking-widest mb-4">ÉLITE</h3>
-            <p className="text-sm text-white/80">
-              Elegancia sin límites. Descubre nuestra selección exclusiva de piezas de alta costura.
-            </p>
-          </div>
+          {/* Brand section removed as per user request */}
+          <div />
 
           {/* Enlaces */}
           <div>
