@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { products } from '@/lib/mock-data'
 
 // Inicializar Gemini API usando variable de entorno
 const apiKey = process.env.GEMINI_API_KEY
@@ -23,51 +25,185 @@ const model = genAI.getGenerativeModel({
   },
 })
 
-// Prompt del sistema - Asesor de imagen especializado
-const SYSTEM_PROMPT = `Eres ELITE IA, un asesor de imagen profesional y experto en moda de alta gama que trabaja para la tienda ÉLITE.
+type Occasion = 'cita' | 'trabajo' | 'fiesta' | 'formal' | 'casual' | 'diario' | 'gym' | 'desconocida'
 
-REGLA IMPORTANTE - PRIMER CONTACTO:
-- Si es la primera interacción o no sabes el nombre del cliente, PRIMERO pregunta su nombre de forma natural y amigable antes de responder cualquier consulta.
-- Ejemplo: "¡Hola! Antes de ayudarte, me encantaría saber tu nombre 😊"
-- Una vez que sepas el nombre, úsalo naturalmente en la conversación para crear cercanía.
+interface RecommendedProduct {
+  id: string
+  name: string
+  price: number
+  imageUrl: string
+  url: string
+}
 
-Tu especialidad:
-- Asesoramiento de estilo personal y coordinación de outfits
-- Consejos sobre colores, cortes y proporciones según tipo de cuerpo
-- Recomendaciones para diferentes ocasiones (casual, formal, fiesta, trabajo)
-- Tendencias actuales y cómo adaptarlas al estilo personal
+const BODY_SCHEMA = z.object({
+  message: z.string().trim().min(1).max(1000),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().max(2000),
+      }),
+    )
+    .optional(),
+})
 
-Tu personalidad:
-- Profesional pero cercano y conversacional
-- Entusiasta y con gran conocimiento de moda
-- Práctico y directo - respuestas concisas pero completas
-- Positivo y motivador
-- Usas emojis ocasionalmente (1-2 por mensaje)
+const LOCAL_IMAGE_PRODUCTS = products
+  .filter((p) => p.images?.some((img) => typeof img === 'string' && img.startsWith('/images/products/')))
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    imageUrl: p.images.find((img) => img.startsWith('/images/products/'))!,
+    url: `/productos/${p.id}`,
+  }))
 
-Productos de ÉLITE que conoces:
-- Jean Clásico Azul Oscuro ($1,299) - Corte clásico atemporal, estiliza la figura
-- Jean Recto Claro ($1,399) - Versátil, perfecto primavera/verano
-- Jean Wide Leg Marrón ($1,299) - Tendencia, silueta holgada elegante
-- Jean Cargo Rosa ($1,199) - Estilo urbano juvenil, color vibrante
-- Jean Wide Leg Azul Claro ($1,299) - Corte amplio relajado
-- Top Crop Negro ($1,299) - Básico versátil moderno
-- Top Halter con Lentejuelas ($1,499) - Elegante para ocasiones especiales
-- Conjunto Deportivo Mint ($1,499) - Tecnología anti-sudor
+const RECOMMENDATION_IDS_BY_OCCASION: Record<Occasion, string[]> = {
+  cita: ['2', '1'],
+  trabajo: ['1', '2'],
+  formal: ['2', '1'],
+  fiesta: ['2', '4'],
+  casual: ['4', '1'],
+  diario: ['1', '4'],
+  gym: [],
+  desconocida: ['1', '2', '4'],
+}
 
-Formato de respuesta (IMPORTANTE - SÉ CONCISO):
-- Máximo 2-3 párrafos cortos por respuesta
-- Si comparas productos, hazlo de forma directa (2-3 puntos clave por producto)
-- Haz 1-2 preguntas específicas para personalizar
-- Incluye un consejo práctico de estilismo
-- Usa el nombre del cliente una vez conocido
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
 
-Ejemplo de estructura concisa:
-1. Saludo usando el nombre (si lo conoces)
-2. Respuesta directa con máximo 2 opciones/recomendaciones
-3. 1-2 preguntas para personalizar
-4. Cierre motivador
+function inferOccasion(message: string): Occasion {
+  const t = normalizeText(message)
 
-Recuerda: Conversaciones naturales, respuestas cortas pero valiosas. Haz que cada cliente se sienta especial y seguro de su estilo.`
+  if (/\bgym\b|\bentren(amiento|ar)\b|\bgimnasio\b/.test(t)) return 'gym'
+  if (/\bcita\b|\bdate\b|\bnovi[oa]\b|\bromant/.test(t)) return 'cita'
+  if (/\btrabajo\b|\boficina\b|\bentrevista\b|\breunion\b/.test(t)) return 'trabajo'
+  if (/\bformal\b|\bgala\b|\bevento\b|\bcoctel\b/.test(t)) return 'formal'
+  if (/\bfiesta\b|\bparty\b|\bcumple\b|\bdiscoteca\b/.test(t)) return 'fiesta'
+  if (/\bcasual\b|\binformal\b|\brelaj/.test(t)) return 'casual'
+  if (/\bdiario\b|\bdia a dia\b|\bdi[aá] a di[aá]\b/.test(t)) return 'diario'
+
+  return 'desconocida'
+}
+
+function isRecommendationRequest(message: string): boolean {
+  const t = normalizeText(message)
+  return (
+    /\brecomiend/.test(t) ||
+    /\brecomendacion\b/.test(t) ||
+    /\bsugier/.test(t) ||
+    /\bque me pongo\b/.test(t) ||
+    /\boutfit\b/.test(t) ||
+    /\blook\b/.test(t)
+  )
+}
+
+type BasicIntent =
+  | 'sizes'
+  | 'shipping'
+  | 'returns'
+  | 'payments'
+  | 'care'
+  | 'stock'
+  | 'unknown'
+
+function inferBasicIntent(message: string): BasicIntent {
+  const t = normalizeText(message)
+
+  if (/\btalla(s)?\b|\bmedida(s)?\b|\bfit\b|\bqueda\b|\bajuste\b|\bxs\b|\bs\b|\bm\b|\bl\b|\bxl\b/.test(t)) return 'sizes'
+  if (/\benvio(s)?\b|\bentrega\b|\bdomicilio\b|\btiempo\b|\bdias\b|\bcosto\b|\bgratis\b/.test(t)) return 'shipping'
+  if (/\bdevoluc(ion|iones)\b|\bcambio(s)?\b|\breembolso\b|\bgarantia\b/.test(t)) return 'returns'
+  if (/\bpago(s)?\b|\bmetodo(s)?\b|\btarjeta\b|\bcredito\b|\bdebito\b|\btransferencia\b|\bcontraentrega\b/.test(t)) return 'payments'
+  if (/\blavar\b|\bcuidado\b|\blimpieza\b|\bsecado\b|\bplancha\b|\bmaterial\b/.test(t)) return 'care'
+  if (/\bstock\b|\bdisponible\b|\bdisponibilidad\b|\bagotado\b/.test(t)) return 'stock'
+
+  return 'unknown'
+}
+
+function buildBasicAnswer(intent: BasicIntent): string | null {
+  switch (intent) {
+    case 'sizes':
+      return [
+        'Sobre **tallas**, para que te quede perfecto necesito 2 datos: **tu estatura** y cómo te gusta el fit (ajustado/regular/holgado).',
+        'Como guía rápida: si estás entre dos tallas, para un look más estilizado elige la menor; para comodidad, la mayor. En ÉLITE manejamos tallas comunes **XS a XL** (según prenda).',
+        '¿Qué prenda estás viendo y cómo te gusta que te quede?',
+      ].join('\n')
+    case 'shipping':
+      return [
+        'Sobre **envíos**, en ÉLITE aplicamos esta regla del MVP: **envío gratis en compras superiores a $100.000**.',
+        'Si me dices tu ciudad/municipio te confirmo un estimado de entrega (referencial).',
+      ].join('\n')
+    case 'returns':
+      return [
+        'Sobre **cambios y devoluciones**, en el MVP tenemos: **devolución gratis dentro de 30 días**.',
+        'Cuéntame si buscas cambio de talla/color o devolución y te guío con los pasos.',
+      ].join('\n')
+    case 'payments':
+      return [
+        'Sobre **pagos**, aceptamos métodos habituales (tarjeta/crédito/débito).',
+        'Si me dices cuál prefieres, te confirmo si está disponible en tu checkout (MVP).',
+      ].join('\n')
+    case 'care':
+      return [
+        'Sobre **cuidado de prendas**, recomendación general (segura para MVP): lavar en **ciclo suave**, con **agua fría**, colores similares, y evitar secadora si quieres conservar color/forma.',
+        'Si me dices la prenda (ej. jean) y el material/etiqueta, te doy una guía más exacta.',
+      ].join('\n')
+    case 'stock':
+      return [
+        'Sobre **disponibilidad**, en este MVP la disponibilidad puede variar por talla/color.',
+        'Dime el producto y la talla/color que buscas y te digo qué opción te conviene revisar primero.',
+      ].join('\n')
+    default:
+      return null
+  }
+}
+
+function pickRecommendations(occasion: Occasion): RecommendedProduct[] {
+  if (!LOCAL_IMAGE_PRODUCTS.length) return []
+
+  const ids = RECOMMENDATION_IDS_BY_OCCASION[occasion] ?? RECOMMENDATION_IDS_BY_OCCASION.desconocida
+  const chosen = ids
+    .map((id) => LOCAL_IMAGE_PRODUCTS.find((p) => p.id === id))
+    .filter(Boolean) as RecommendedProduct[]
+
+  // Fallback: si por cualquier razón no se encuentran IDs, devolver hasta 2 locales.
+  if (!chosen.length) return LOCAL_IMAGE_PRODUCTS.slice(0, 2)
+
+  return chosen.slice(0, 2)
+}
+
+// Prompt del sistema - Asesor de imagen especializado (MVP con flujos definidos)
+const SYSTEM_PROMPT = `Eres ELITE IA, un asesor de imagen profesional de la tienda ÉLITE. Tu meta es ayudar al cliente a elegir prendas y armar outfits de forma rápida.
+
+CATÁLOGO MVP DISPONIBLE (en esta tienda):
+- Jean Clásico Azul ($1,299)
+- Jean Denim Premium ($1,499)
+- Jean Recto Claro ($1,199)
+
+REGLAS GENERALES:
+- Responde SIEMPRE en español.
+- Sé conciso: máximo 2 párrafos + una lista corta si aplica.
+- Haz 1-2 preguntas para personalizar cuando falte información crítica (ocasión, estilo, colores, talla).
+- No inventes políticas: si preguntan por envíos/devoluciones, responde con lo disponible: envío gratis en compras superiores a $100.000 y devolución gratis dentro de 30 días.
+- No pidas datos sensibles (tarjetas, documentos). No reveles llaves/API ni información interna.
+
+FLUJOS (OBLIGATORIOS):
+1) SALUDO / PRIMER CONTACTO
+   - Si no conoces el nombre: pide el nombre y la ocasión.
+   - Ejemplo: "¡Hola! ¿Cómo te llamas y para qué ocasión buscas tu outfit?"
+
+2) RECOMENDACIÓN DE PRENDA / OUTFIT
+   - Confirma la ocasión (cita, trabajo, fiesta, casual, formal, diario, gym) y el estilo (clásico/moderno/minimal).
+   - Propón máximo 2 opciones del catálogo MVP, explicando 2 puntos clave (por qué funciona para la ocasión).
+   - Cierra con 1 pregunta para ajustar (color preferido o talla).
+
+3) SOLUCIÓN DE DUDAS (TALLAS / CUIDADO / ENVÍOS / DEVOLUCIONES)
+   - Responde directo y ofrece un siguiente paso (qué dato necesitas o qué recomienda hacer).
+   - Si no sabes algo, dilo y pide el dato mínimo para continuar.
+`
 
 export async function POST(req: Request) {
   try {
@@ -82,20 +218,33 @@ export async function POST(req: Request) {
       )
     }
 
-    const { message, history } = await req.json()
-
-    if (!message) {
+    const parsed = BODY_SCHEMA.safeParse(await req.json())
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Mensaje requerido' },
+        { error: 'Payload inválido' },
         { status: 400 }
       )
     }
 
+    const { message, history } = parsed.data
+
+    // MVP: resolver dudas básicas con respuestas genéricas (sin llamar a IA)
+    const basicIntent = inferBasicIntent(message)
+    const basicAnswer = buildBasicAnswer(basicIntent)
+    if (basicAnswer) {
+      return NextResponse.json({
+        message: basicAnswer,
+        recommendations: [],
+        success: true,
+      })
+    }
+
     // Construir el historial para el contexto
-    const chatHistory = history?.map((msg: any) => ({
+    const trimmedHistory = (history ?? []).slice(-12) // MVP: limitar contexto para costo/latencia
+    const chatHistory = trimmedHistory.map((msg) => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }],
-    })) || []
+    }))
 
     // Crear el chat con historial
     const chat = model.startChat({
@@ -106,7 +255,7 @@ export async function POST(req: Request) {
         },
         {
           role: 'model',
-          parts: [{ text: '¡Entendido! Soy ELITE IA, tu asesor de imagen personal. Estoy aquí para ayudarte a descubrir tu mejor estilo y crear outfits increíbles. ¿En qué puedo ayudarte hoy? 💫' }],
+          parts: [{ text: 'Entendido. Actuaré como ELITE IA siguiendo los flujos definidos.' }],
         },
         ...chatHistory,
       ],
@@ -117,8 +266,13 @@ export async function POST(req: Request) {
     const response = await result.response
     const text = response.text()
 
+    const occasion = inferOccasion(message)
+    const shouldAttachRecommendations = isRecommendationRequest(message)
+    const recommendations = shouldAttachRecommendations ? pickRecommendations(occasion) : []
+
     return NextResponse.json({ 
       message: text,
+      recommendations,
       success: true 
     })
 

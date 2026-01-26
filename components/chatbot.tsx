@@ -12,6 +12,15 @@ interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
+  recommendations?: RecommendedProduct[]
+}
+
+interface RecommendedProduct {
+  id: string
+  name: string
+  price: number
+  imageUrl: string
+  url: string
 }
 
 export function Chatbot() {
@@ -20,7 +29,7 @@ export function Chatbot() {
     {
       id: '1',
       role: 'assistant',
-      content: '¡Hola! 👋 Soy tu asistente de ÉLITE. ¿En qué puedo ayudarte hoy? Puedo ayudarte a encontrar productos, sugerir outfits o darte recomendaciones de estilo.',
+      content: 'Hola, soy tu asesor de estilo de ÉLITE. ¿Cómo te llamas y para qué ocasión buscas tu outfit?',
     },
   ])
   const [input, setInput] = useState('')
@@ -91,6 +100,7 @@ export function Chatbot() {
         id: Date.now().toString(),
         role: 'assistant',
         content: data.message,
+        recommendations: Array.isArray(data.recommendations) ? data.recommendations : undefined,
       }
 
       setMessages((prev) => [...prev, assistantMessage])
@@ -222,6 +232,34 @@ export function Chatbot() {
                           }
                           return <p key={idx} className="my-1">{line || '\u00A0'}</p>
                         })}
+                        {message.recommendations && message.recommendations.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-xs text-muted-foreground mb-2">Recomendaciones</p>
+                            <div className="grid grid-cols-2 gap-3">
+                              {message.recommendations.slice(0, 2).map((rec) => (
+                                <a
+                                  key={rec.id}
+                                  href={rec.url}
+                                  className="block rounded-xl overflow-hidden border border-border bg-background hover:bg-muted/40 transition-colors"
+                                >
+                                  <div className="relative aspect-[3/4] bg-muted">
+                                    <Image
+                                      src={rec.imageUrl}
+                                      alt={rec.name}
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 640px) 40vw, 200px"
+                                    />
+                                  </div>
+                                  <div className="p-3">
+                                    <p className="text-xs font-medium leading-snug line-clamp-2">{rec.name}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">${Number(rec.price).toLocaleString()}</p>
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
