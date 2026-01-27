@@ -127,6 +127,21 @@ function toPresetOccasion(occasion: Occasion): PresetOccasion | null {
   return null
 }
 
+function extractPresetOccasion(message: string): PresetOccasion | null {
+  const t = normalizeText(message)
+
+  // Respuestas cortas típicas del usuario después de una pregunta de ocasión.
+  if (/^(casual|trabajo|cita|fiesta)$/.test(t.trim())) return t.trim() as PresetOccasion
+
+  // Variantes comunes (ej: "para trabajo", "look casual", "ocasión: fiesta")
+  if (/\btrabajo\b|\boficina\b|\bentrevista\b|\breunion\b/.test(t)) return 'trabajo'
+  if (/\bcita\b|\bdate\b|\bromant/.test(t)) return 'cita'
+  if (/\bfiesta\b|\bparty\b|\bcumple\b|\bdiscoteca\b/.test(t)) return 'fiesta'
+  if (/\bcasual\b|\bdiario\b|\binformal\b|\brelaj/.test(t)) return 'casual'
+
+  return null
+}
+
 function buildOutfitForOccasion(preset: PresetOccasion): { message: string; recommendations: RecommendedProduct[] } {
   // Productos existentes en el mock-data (IDs):
   // Jeans: 1,2,3,4,5 | Tops: 6,7 | Conjunto gym: 8
@@ -348,9 +363,9 @@ export async function POST(req: Request) {
     }
 
     // MVP: looks determinísticos por 4 ocasiones (incluye links + imágenes del catálogo)
-    if (isRecommendationRequest(message)) {
-      const inferred = inferOccasion(message)
-      const preset = toPresetOccasion(inferred)
+    const presetFromMessage = extractPresetOccasion(message)
+    if (isRecommendationRequest(message) || presetFromMessage) {
+      const preset = presetFromMessage ?? toPresetOccasion(inferOccasion(message))
 
       if (!preset) {
         return NextResponse.json({
