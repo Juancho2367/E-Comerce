@@ -145,7 +145,8 @@ function extractPresetOccasion(message: string): PresetOccasion | null {
 function buildOutfitForOccasion(preset: PresetOccasion): { message: string; recommendations: RecommendedProduct[] } {
   // Productos existentes en el mock-data (IDs):
   // Jeans: 1,2,3,4,5 | Tops: 6,7 | Conjunto gym: 8
-  const commonQuestions = '¿Prefieres un look más **ajustado** o más **holgado** y qué talla usas normalmente (XS–XL)?'
+  const commonQuestions =
+    'Para dejarlo perfecto: ¿prefieres un fit más **ajustado** o más **holgado** y qué talla usas normalmente (XS–XL)? 🙂'
 
   if (preset === 'trabajo') {
     const look = [
@@ -160,9 +161,9 @@ function buildOutfitForOccasion(preset: PresetOccasion): { message: string; reco
 
     return {
       message: [
-        '**Ocasión: Trabajo (look recomendado)**',
-        'Colorimetría y ocasión: el **negro** es neutro y elegante, y el **denim azul oscuro** funciona como base fría/neutral que se ve profesional y estiliza.',
-        'Si quieres ajustar el look con lo que hay en la tienda: cambia el jean por una opción más clara (más casual) o mantén el oscuro (más formal).',
+        '¡Listo! Te armé un **look para Trabajo** que se ve pulido y es muy fácil de combinar.',
+        'Colorimetría: el **negro** (neutral) aporta elegancia, y el **denim azul oscuro** funciona como base fría/neutral que estiliza y se siente más “pro”.',
+        'Si quieres ajustarlo con lo que hay en la tienda: un jean más claro lo hace más casual; el oscuro lo mantiene más formal.',
         commonQuestions,
       ].join('\n\n'),
       recommendations: [...look, ...swaps],
@@ -182,9 +183,9 @@ function buildOutfitForOccasion(preset: PresetOccasion): { message: string; reco
 
     return {
       message: [
-        '**Ocasión: Cita (look recomendado)**',
-        'Colorimetría y ocasión: el brillo **bronce/dorado** (cálido) con **azul** (frío) crea un contraste equilibrado que llama la atención sin verse recargado.',
-        'Cambios rápidos con el catálogo: si quieres algo más “noche”, cambia a denim más oscuro; si quieres algo más minimal, cambia el top por negro.',
+        '¡Qué buena ocasión! Te armé un **look para Cita** que se siente especial sin esfuerzo. ✨',
+        'Colorimetría: el brillo **bronce/dorado** (cálido) con **azul** (frío) crea un contraste elegante que llama la atención sin verse recargado.',
+        'Cambios rápidos: si lo quieres más “noche”, elige denim más oscuro; si lo quieres más minimal, cambia el top por negro.',
         commonQuestions,
       ].join('\n\n'),
       recommendations: [...look, ...swaps],
@@ -204,9 +205,9 @@ function buildOutfitForOccasion(preset: PresetOccasion): { message: string; reco
 
     return {
       message: [
-        '**Ocasión: Fiesta (look recomendado)**',
-        'Colorimetría y ocasión: para fiesta conviene un “punto focal” arriba (lentejuelas) y una base sólida abajo (denim oscuro) para mantener balance visual.',
-        'Cambios rápidos con el catálogo: si quieres un look más cálido, prueba un jean marrón; si quieres bajar el brillo, cambia el top por negro.',
+        '¡Vamos con un **look para Fiesta**! La idea es verte impactante pero equilibrada. 💫',
+        'Colorimetría: para fiesta conviene un “punto focal” arriba (lentejuelas) y una base sólida abajo (denim oscuro) para mantener el balance visual.',
+        'Cambios rápidos: si quieres un look más cálido, prueba un jean marrón; si quieres bajar el brillo, cambia el top por negro.',
         commonQuestions,
       ].join('\n\n'),
       recommendations: [...look, ...swaps],
@@ -226,9 +227,9 @@ function buildOutfitForOccasion(preset: PresetOccasion): { message: string; reco
 
   return {
     message: [
-      '**Ocasión: Casual (look recomendado)**',
-      'Colorimetría y ocasión: una base **neutra** (negro) combina con todo y el **denim claro** da sensación más fresca/relajada (ideal día).',
-      'Cambios rápidos con el catálogo: si quieres más clásico, cambia a jean azul; si quieres más tendencia, cambia a wide-leg.',
+      '¡Perfecto! Te armé un **look Casual** cómodo, fresco y con estilo.',
+      'Colorimetría: una base **neutra** (negro) combina con todo y el **denim claro** se siente más relajado y “de día”.',
+      'Cambios rápidos: si lo quieres más clásico, cambia a jean azul; si quieres más tendencia, cambia a wide-leg.',
       commonQuestions,
     ].join('\n\n'),
     recommendations: [...look, ...swaps],
@@ -261,34 +262,34 @@ function buildBasicAnswer(intent: BasicIntent): string | null {
   switch (intent) {
     case 'sizes':
       return [
-        'Sobre **tallas**, para que te quede perfecto necesito 2 datos: **tu estatura** y cómo te gusta el fit (ajustado/regular/holgado).',
-        'Como guía rápida: si estás entre dos tallas, para un look más estilizado elige la menor; para comodidad, la mayor. En ÉLITE manejamos tallas comunes **XS a XL** (según prenda).',
-        '¿Qué prenda estás viendo y cómo te gusta que te quede?',
+        '¡Claro! Con gusto te ayudo con **tallas**. Para recomendarte bien solo necesito 2 datos: **tu estatura** y cómo te gusta el fit (**ajustado / regular / holgado**).',
+        'Guía rápida (MVP): si estás entre dos tallas, para un look más estilizado elige la menor; para más comodidad, la mayor. En ÉLITE solemos manejar **XS a XL** (según prenda).',
+        'Cuéntame: ¿qué prenda estás viendo y cómo te gustaría que te quedara? 🙂',
       ].join('\n')
     case 'shipping':
       return [
-        'Sobre **envíos**, en ÉLITE aplicamos esta regla del MVP: **envío gratis en compras superiores a $100.000**.',
-        'Si me dices tu ciudad/municipio te confirmo un estimado de entrega (referencial).',
+        '¡Perfecto! Sobre **envíos**, en ÉLITE aplicamos esta regla del MVP: **envío gratis en compras superiores a $100.000**.',
+        'Si me dices tu ciudad/municipio, te doy un estimado de entrega (referencial). 🚚',
       ].join('\n')
     case 'returns':
       return [
-        'Sobre **cambios y devoluciones**, en el MVP tenemos: **devolución gratis dentro de 30 días**.',
-        'Cuéntame si buscas cambio de talla/color o devolución y te guío con los pasos.',
+        '¡Sin problema! Sobre **cambios y devoluciones**, en el MVP tenemos: **devolución gratis dentro de 30 días**.',
+        'Dime si buscas **cambio de talla/color** o **devolución** y te guío con los pasos más simples. ✅',
       ].join('\n')
     case 'payments':
       return [
-        'Sobre **pagos**, aceptamos métodos habituales (tarjeta/crédito/débito).',
-        'Si me dices cuál prefieres, te confirmo si está disponible en tu checkout (MVP).',
+        '¡Genial! Sobre **pagos**, aceptamos métodos habituales (tarjeta / crédito / débito).',
+        'Dime cuál prefieres y te oriento con la opción más cómoda en este MVP. 💳',
       ].join('\n')
     case 'care':
       return [
-        'Sobre **cuidado de prendas**, recomendación general (segura para MVP): lavar en **ciclo suave**, con **agua fría**, colores similares, y evitar secadora si quieres conservar color/forma.',
-        'Si me dices la prenda (ej. jean) y el material/etiqueta, te doy una guía más exacta.',
+        '¡Buena pregunta! Para **cuidar tus prendas** (guía general segura para MVP): lava en **ciclo suave**, con **agua fría**, colores similares, y evita secadora si quieres conservar color y forma.',
+        'Si me dices la prenda (por ejemplo, jean) y si viste alguna etiqueta/material, te lo dejo más exacto. 🧼',
       ].join('\n')
     case 'stock':
       return [
-        'Sobre **disponibilidad**, en este MVP la disponibilidad puede variar por talla/color.',
-        'Dime el producto y la talla/color que buscas y te digo qué opción te conviene revisar primero.',
+        '¡Vamos a verlo! Sobre **disponibilidad**, en este MVP puede variar por talla y color.',
+        'Dime el producto y la talla/color que buscas y te digo qué opción te conviene revisar primero. 🔎',
       ].join('\n')
     default:
       return null
@@ -298,35 +299,55 @@ function buildBasicAnswer(intent: BasicIntent): string | null {
 // pickRecommendations eliminado: ahora devolvemos looks completos por 4 ocasiones (MVP).
 
 // Prompt del sistema - Asesor de imagen especializado (MVP con flujos definidos)
-const SYSTEM_PROMPT = `Eres ELITE IA, un asesor de imagen profesional de la tienda ÉLITE. Tu meta es ayudar al cliente a elegir prendas y armar outfits de forma rápida.
+const SYSTEM_PROMPT = `Eres ELITE IA, un asesor de imagen profesional y experto en moda de alta gama que trabaja para la tienda ÉLITE.
 
-CATÁLOGO MVP DISPONIBLE (en esta tienda):
-- Jean Clásico Azul ($1,299)
-- Jean Denim Premium ($1,499)
-- Jean Recto Claro ($1,199)
+Tu especialidad es:
+- Análisis de estilo personal y asesoramiento de imagen integral
+- Recomendaciones de outfits completos y coordinación de prendas
+- Consejos sobre colores, texturas y proporciones según el tipo de cuerpo
+- Sugerencias de estilo para diferentes ocasiones (casual, formal, deportivo, fiesta, etc.)
+- Tendencias actuales de moda y cómo adaptarlas al estilo personal
+- Combinaciones de accesorios y calzado
+- Paletas de colores personalizadas según tono de piel y características personales
 
-REGLAS GENERALES:
-- Responde SIEMPRE en español.
-- Sé conciso: máximo 2 párrafos + una lista corta si aplica.
-- Haz 1-2 preguntas para personalizar cuando falte información crítica (ocasión, estilo, colores, talla).
-- No inventes políticas: si preguntan por envíos/devoluciones, responde con lo disponible: envío gratis en compras superiores a $100.000 y devolución gratis dentro de 30 días.
-- No pidas datos sensibles (tarjetas, documentos). No reveles llaves/API ni información interna.
+Tu personalidad:
+- Profesional pero cercano y amigable
+- Entusiasta de la moda y con gran conocimiento
+- Detallista y atento a las necesidades específicas del cliente
+- Ofreces consejos prácticos y aplicables
+- Siempre positivo y motivador
+- Usas emojis ocasionalmente (pero no en exceso)
 
-FLUJOS (OBLIGATORIOS):
-1) SALUDO / PRIMER CONTACTO
-   - Si no conoces el nombre: pide el nombre y la ocasión.
-   - Ejemplo: "¡Hola! ¿Cómo te llamas y para qué ocasión buscas tu outfit?"
+Productos de ÉLITE que conoces (del catálogo del MVP):
+- Jean Clásico Azul (corte clásico, atemporal)
+- Jean Recto Claro (moderno, tono claro versátil)
+- Jean Wide Leg Marrón (tendencia, silueta holgada y elegante)
+- Jean Wide Leg Azul Claro (relajado y moderno)
+- Top Crop Negro (básico versátil)
+- Top Halter con Lentejuelas (festivo y elegante)
+- Conjunto Deportivo Mint (deportivo, color fresco)
 
-2) RECOMENDACIÓN DE PRENDA / OUTFIT
-   - SOLO hay 4 ocasiones predefinidas: cita, trabajo, fiesta, casual.
-   - Si el usuario no indica una, pregunta cuál de las 4 aplica.
-   - Basarte en principios simples de colorimetría: neutrales (negro/azul) para trabajo, contraste cálido-frío (dorado+azul) para cita, foco visual para fiesta, frescura/relajo para casual.
-   - Propón un look (top + bottom) y ofrece 1-2 cambios posibles con prendas del catálogo.
+Tu enfoque:
+1. Escucha las necesidades del cliente (ocasión, estilo preferido, presupuesto, tipo de cuerpo)
+2. Haz preguntas específicas para personalizar tus recomendaciones
+3. Sugiere outfits completos, no solo prendas aisladas
+4. Explica el "por qué" de tus recomendaciones (colores que favorecen, proporciones, etc.)
+5. Ofrece alternativas y opciones para diferentes gustos
+6. Da consejos prácticos sobre cómo llevar las prendas (incluye accesorios/calzado cuando ayude)
+7. Considera temporada, tendencias y versatilidad
 
-3) SOLUCIÓN DE DUDAS (TALLAS / CUIDADO / ENVÍOS / DEVOLUCIONES)
-   - Responde directo y ofrece un siguiente paso (qué dato necesitas o qué recomienda hacer).
-   - Si no sabes algo, dilo y pide el dato mínimo para continuar.
-`
+Formato de respuesta:
+- Sé conversacional y natural
+- Usa listas cuando sugieras múltiples opciones
+- Describe outfits completos con detalles
+- Incluye consejos de estilismo (accesorios, calzado, etc.)
+- Pregunta si el cliente necesita más detalles o tiene otras preferencias
+
+NOTA MVP (IMPORTANTE):
+- En este MVP trabajamos con 4 ocasiones predefinidas para recomendaciones: **casual, trabajo, cita, fiesta**.
+- Si el cliente menciona otra ocasión, ayúdalo a mapearla a una de esas 4 de forma amable.
+
+Recuerda: tu objetivo es hacer que cada cliente se sienta único, seguro y emocionado con su estilo personal. No solo vendes ropa: creas experiencias de moda.`
 
 export async function POST(req: Request) {
   try {
@@ -370,7 +391,7 @@ export async function POST(req: Request) {
       if (!preset) {
         return NextResponse.json({
           message:
-            'Perfecto, puedo armarte un look. ¿Para cuál de estas 4 ocasiones lo necesitas?\n- **Casual**\n- **Trabajo**\n- **Cita**\n- **Fiesta**',
+            '¡Genial! Yo te lo armo. Para hacerlo rápido, dime cuál de estas 4 ocasiones aplica:\n- **Casual**\n- **Trabajo**\n- **Cita**\n- **Fiesta**\n\n(Si quieres, dime también si te gusta más **clásico** o **moderno**.)',
           recommendations: [],
           success: true,
         })
