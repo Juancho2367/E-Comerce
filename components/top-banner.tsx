@@ -4,7 +4,12 @@ import { Truck, HeadphonesIcon, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 export function TopBanner() {
-  const benefits = [
+  const benefits: Array<{
+    icon: typeof HeadphonesIcon
+    text: string
+    subtext: string
+    link?: string
+  }> = [
     {
       icon: HeadphonesIcon,
       text: 'Atención 24/7',
@@ -15,7 +20,7 @@ export function TopBanner() {
       icon: Shield,
       text: 'Compra segura',
       subtext: 'Garantía',
-      link: '/garantia',
+      // MVP: evita redireccionar a una ruta no implementada (Not Found)
     },
   ]
 
@@ -37,18 +42,36 @@ export function TopBanner() {
         <div className="hidden md:grid grid-cols-2 divide-x divide-primary-foreground/10">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon
-            return (
-              <Link
-                key={index}
-                href={benefit.link}
-                className="flex items-center justify-center gap-2 py-2.5 hover:bg-primary-foreground/5 transition-colors group"
-              >
+            const content = (
+              <>
                 <Icon className="h-4 w-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                 <div className="text-center">
                   <div className="text-xs font-semibold leading-tight">{benefit.text}</div>
                   <div className="text-[10px] opacity-90 leading-tight">{benefit.subtext}</div>
                 </div>
-              </Link>
+              </>
+            )
+
+            return (
+              benefit.link ? (
+                <Link
+                  key={index}
+                  href={benefit.link}
+                  className="flex items-center justify-center gap-2 py-2.5 hover:bg-primary-foreground/5 transition-colors group"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <button
+                  key={index}
+                  type="button"
+                  className="flex items-center justify-center gap-2 py-2.5 hover:bg-primary-foreground/5 transition-colors group cursor-default"
+                  onClick={(e) => e.preventDefault()}
+                  aria-label={benefit.text}
+                >
+                  {content}
+                </button>
+              )
             )
           })}
         </div>
