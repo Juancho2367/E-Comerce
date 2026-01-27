@@ -21,6 +21,8 @@ interface RecommendedProduct {
   price: number
   imageUrl: string
   url: string
+  tag?: 'LOOK' | 'CAMBIO'
+  slot?: 'top' | 'bottom'
 }
 
 export function Chatbot() {
@@ -237,22 +239,36 @@ export function Chatbot() {
                           <div className="mt-4">
                             <p className="text-xs text-muted-foreground mb-2">Recomendaciones</p>
                             <div className="grid grid-cols-2 gap-3">
-                              {message.recommendations.slice(0, 2).map((rec) => (
+                              {message.recommendations.slice(0, 4).map((rec) => (
                                 <a
                                   key={rec.id}
                                   href={rec.url}
                                   className="block rounded-xl overflow-hidden border border-border bg-background hover:bg-muted/40 transition-colors"
                                 >
                                   <div className="relative aspect-[3/4] bg-muted">
-                                    <Image
+                                    {/* Usamos <img> para soportar imágenes remotas del catálogo (MVP) */}
+                                    <img
                                       src={rec.imageUrl}
                                       alt={rec.name}
-                                      fill
-                                      className="object-cover"
-                                      sizes="(max-width: 640px) 40vw, 200px"
+                                      className="absolute inset-0 w-full h-full object-cover"
+                                      loading="lazy"
                                     />
                                   </div>
                                   <div className="p-3">
+                                    {(rec.tag || rec.slot) && (
+                                      <div className="flex items-center gap-2 mb-1">
+                                        {rec.tag && (
+                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                            {rec.tag}
+                                          </span>
+                                        )}
+                                        {rec.slot && (
+                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border capitalize">
+                                            {rec.slot}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
                                     <p className="text-xs font-medium leading-snug line-clamp-2">{rec.name}</p>
                                     <p className="text-xs text-muted-foreground mt-1">${Number(rec.price).toLocaleString()}</p>
                                   </div>

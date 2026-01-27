@@ -33,6 +33,8 @@ interface RecommendedProduct {
   price: number
   imageUrl: string
   url: string
+  tag?: 'LOOK' | 'CAMBIO'
+  slot?: 'top' | 'bottom'
 }
 
 const BODY_SCHEMA = z.object({
@@ -47,15 +49,22 @@ const BODY_SCHEMA = z.object({
     .optional(),
 })
 
-const LOCAL_IMAGE_PRODUCTS = products
-  .filter((p) => p.images?.some((img) => typeof img === 'string' && img.startsWith('/images/products/')))
-  .map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    imageUrl: p.images.find((img) => img.startsWith('/images/products/'))!,
-    url: `/productos/${p.id}`,
-  }))
+const PRODUCT_BY_ID = new Map(products.map((p) => [p.id, p]))
+
+function toCard(productId: string, extra?: Pick<RecommendedProduct, 'tag' | 'slot'>): RecommendedProduct | null {
+  const product = PRODUCT_BY_ID.get(productId)
+  if (!product) return null
+  const imageUrl = product.images?.[0]
+  if (!imageUrl) return null
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    imageUrl,
+    url: `/productos/${product.id}`,
+    ...extra,
+  }
+}
 
 const RECOMMENDATION_IDS_BY_OCCASION: Record<Occasion, string[]> = {
   cita: ['2', '1'],
@@ -99,6 +108,116 @@ function isRecommendationRequest(message: string): boolean {
     /\boutfit\b/.test(t) ||
     /\blook\b/.test(t)
   )
+}
+
+type PresetOccasion = 'casual' | 'trabajo' | 'cita' | 'fiesta'
+
+function toPresetOccasion(occasion: Occasion): PresetOccasion | null {
+  // Regla MVP: SOLO 4 ocasiones. Las demás se mapean o se consideran desconocidas.
+  if (occasion === 'casual') return 'casual'
+  if (occasion === 'trabajo') return 'trabajo'
+  if (occasion === 'cita') return 'cita'
+  if (occasion === 'fiesta') return 'fiesta'
+
+  // Mapeos razonables (MVP)
+  if (occasion === 'formal') return 'fiesta'
+  if (occasion === 'diario') return 'casual'
+  if (occasion === 'gym') return 'casual'
+
+  return null
+}
+
+function buildOutfitForOccasion(preset: PresetOccasion): { message: string; recommendations: RecommendedProduct[] } {
+  // Productos existentes en el mock-data (IDs):
+  // Jeans: 1,2,3,4,5 | Tops: 6,7 | Conjunto gym: 8
+  const commonQuestions = '¿Prefieres un look más **ajustado** o más **holgado** y qué talla usas normalmente (XS–XL)?'
+
+  if (preset === 'trabajo') {
+    const look = [
+      toCard('6', { tag: 'LOOK', slot: 'top' }), // Top Crop Negro
+      toCard('2', { tag: 'LOOK', slot: 'bottom' }), // Jean Denim Premium
+    ].filter(Boolean) as RecommendedProduct[]
+
+    const swaps = [
+      toCard('1', { tag: 'CAMBIO', slot: 'bottom' }), // Jean Clásico Azul
+      toCard('4', { tag: 'CAMBIO', slot: 'bottom' }), // Jean Recto Claro
+    ].filter(Boolean) as RecommendedProduct[]
+
+    return {
+      message: [
+        '**Ocasión: Trabajo (look recomendado)**',
+        'Colorimetría y ocasión: el **negro** es neutro y elegante, y el **denim azul oscuro** funciona como base fría/neutral que se ve profesional y estiliza.',
+        'Si quieres ajustar el look con lo que hay en la tienda: cambia el jean por una opción más clara (más casual) o mantén el oscuro (más formal).',
+        commonQuestions,
+      ].join('\n\n'),
+      recommendations: [...look, ...swaps],
+    }
+  }
+
+  if (preset === 'cita') {
+    const look = [
+      toCard('7', { tag: 'LOOK', slot: 'top' }), // Top Halter con Lentejuelas
+      toCard('1', { tag: 'LOOK', slot: 'bottom' }), // Jean Clásico Azul
+    ].filter(Boolean) as RecommendedProduct[]
+
+    const swaps = [
+      toCard('2', { tag: 'CAMBIO', slot: 'bottom' }), // Denim Premium (más noche)
+      toCard('6', { tag: 'CAMBIO', slot: 'top' }), // Crop negro (más minimal)
+    ].filter(Boolean) as RecommendedProduct[]
+
+    return {
+      message: [
+        '**Ocasión: Cita (look recomendado)**',
+        'Colorimetría y ocasión: el brillo **bronce/dorado** (cálido) con **azul** (frío) crea un contraste equilibrado que llama la atención sin verse recargado.',
+        'Cambios rápidos con el catálogo: si quieres algo más “noche”, cambia a denim más oscuro; si quieres algo más minimal, cambia el top por negro.',
+        commonQuestions,
+      ].join('\n\n'),
+      recommendations: [...look, ...swaps],
+    }
+  }
+
+  if (preset === 'fiesta') {
+    const look = [
+      toCard('7', { tag: 'LOOK', slot: 'top' }), // Halter lentejuelas
+      toCard('2', { tag: 'LOOK', slot: 'bottom' }), // Denim premium
+    ].filter(Boolean) as RecommendedProduct[]
+
+    const swaps = [
+      toCard('3', { tag: 'CAMBIO', slot: 'bottom' }), // Wide Leg Marrón (tono cálido)
+      toCard('6', { tag: 'CAMBIO', slot: 'top' }), // Crop negro (si quieres bajar brillo)
+    ].filter(Boolean) as RecommendedProduct[]
+
+    return {
+      message: [
+        '**Ocasión: Fiesta (look recomendado)**',
+        'Colorimetría y ocasión: para fiesta conviene un “punto focal” arriba (lentejuelas) y una base sólida abajo (denim oscuro) para mantener balance visual.',
+        'Cambios rápidos con el catálogo: si quieres un look más cálido, prueba un jean marrón; si quieres bajar el brillo, cambia el top por negro.',
+        commonQuestions,
+      ].join('\n\n'),
+      recommendations: [...look, ...swaps],
+    }
+  }
+
+  // preset === 'casual'
+  const look = [
+    toCard('6', { tag: 'LOOK', slot: 'top' }), // Crop negro (neutro)
+    toCard('4', { tag: 'LOOK', slot: 'bottom' }), // Recto claro (más relajado)
+  ].filter(Boolean) as RecommendedProduct[]
+
+  const swaps = [
+    toCard('1', { tag: 'CAMBIO', slot: 'bottom' }), // Clásico azul
+    toCard('5', { tag: 'CAMBIO', slot: 'bottom' }), // Wide Leg azul claro
+  ].filter(Boolean) as RecommendedProduct[]
+
+  return {
+    message: [
+      '**Ocasión: Casual (look recomendado)**',
+      'Colorimetría y ocasión: una base **neutra** (negro) combina con todo y el **denim claro** da sensación más fresca/relajada (ideal día).',
+      'Cambios rápidos con el catálogo: si quieres más clásico, cambia a jean azul; si quieres más tendencia, cambia a wide-leg.',
+      commonQuestions,
+    ].join('\n\n'),
+    recommendations: [...look, ...swaps],
+  }
 }
 
 type BasicIntent =
@@ -161,19 +280,7 @@ function buildBasicAnswer(intent: BasicIntent): string | null {
   }
 }
 
-function pickRecommendations(occasion: Occasion): RecommendedProduct[] {
-  if (!LOCAL_IMAGE_PRODUCTS.length) return []
-
-  const ids = RECOMMENDATION_IDS_BY_OCCASION[occasion] ?? RECOMMENDATION_IDS_BY_OCCASION.desconocida
-  const chosen = ids
-    .map((id) => LOCAL_IMAGE_PRODUCTS.find((p) => p.id === id))
-    .filter(Boolean) as RecommendedProduct[]
-
-  // Fallback: si por cualquier razón no se encuentran IDs, devolver hasta 2 locales.
-  if (!chosen.length) return LOCAL_IMAGE_PRODUCTS.slice(0, 2)
-
-  return chosen.slice(0, 2)
-}
+// pickRecommendations eliminado: ahora devolvemos looks completos por 4 ocasiones (MVP).
 
 // Prompt del sistema - Asesor de imagen especializado (MVP con flujos definidos)
 const SYSTEM_PROMPT = `Eres ELITE IA, un asesor de imagen profesional de la tienda ÉLITE. Tu meta es ayudar al cliente a elegir prendas y armar outfits de forma rápida.
@@ -196,9 +303,10 @@ FLUJOS (OBLIGATORIOS):
    - Ejemplo: "¡Hola! ¿Cómo te llamas y para qué ocasión buscas tu outfit?"
 
 2) RECOMENDACIÓN DE PRENDA / OUTFIT
-   - Confirma la ocasión (cita, trabajo, fiesta, casual, formal, diario, gym) y el estilo (clásico/moderno/minimal).
-   - Propón máximo 2 opciones del catálogo MVP, explicando 2 puntos clave (por qué funciona para la ocasión).
-   - Cierra con 1 pregunta para ajustar (color preferido o talla).
+   - SOLO hay 4 ocasiones predefinidas: cita, trabajo, fiesta, casual.
+   - Si el usuario no indica una, pregunta cuál de las 4 aplica.
+   - Basarte en principios simples de colorimetría: neutrales (negro/azul) para trabajo, contraste cálido-frío (dorado+azul) para cita, foco visual para fiesta, frescura/relajo para casual.
+   - Propón un look (top + bottom) y ofrece 1-2 cambios posibles con prendas del catálogo.
 
 3) SOLUCIÓN DE DUDAS (TALLAS / CUIDADO / ENVÍOS / DEVOLUCIONES)
    - Responde directo y ofrece un siguiente paso (qué dato necesitas o qué recomienda hacer).
@@ -239,6 +347,28 @@ export async function POST(req: Request) {
       })
     }
 
+    // MVP: looks determinísticos por 4 ocasiones (incluye links + imágenes del catálogo)
+    if (isRecommendationRequest(message)) {
+      const inferred = inferOccasion(message)
+      const preset = toPresetOccasion(inferred)
+
+      if (!preset) {
+        return NextResponse.json({
+          message:
+            'Perfecto, puedo armarte un look. ¿Para cuál de estas 4 ocasiones lo necesitas?\n- **Casual**\n- **Trabajo**\n- **Cita**\n- **Fiesta**',
+          recommendations: [],
+          success: true,
+        })
+      }
+
+      const outfit = buildOutfitForOccasion(preset)
+      return NextResponse.json({
+        message: outfit.message,
+        recommendations: outfit.recommendations,
+        success: true,
+      })
+    }
+
     // Construir el historial para el contexto
     const trimmedHistory = (history ?? []).slice(-12) // MVP: limitar contexto para costo/latencia
     const chatHistory = trimmedHistory.map((msg) => ({
@@ -266,13 +396,9 @@ export async function POST(req: Request) {
     const response = await result.response
     const text = response.text()
 
-    const occasion = inferOccasion(message)
-    const shouldAttachRecommendations = isRecommendationRequest(message)
-    const recommendations = shouldAttachRecommendations ? pickRecommendations(occasion) : []
-
     return NextResponse.json({ 
       message: text,
-      recommendations,
+      recommendations: [],
       success: true 
     })
 
